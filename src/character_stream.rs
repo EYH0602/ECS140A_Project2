@@ -1,6 +1,4 @@
-use std::convert::TryFrom;
 use std::fs::File;
-use std::io;
 use std::io::prelude::*;
 
 pub struct CharStream {
@@ -59,7 +57,6 @@ impl CharStream {
 				// consume the first char
 				let mut chars = self.contents.chars();
 				chars.next();
-				chars.next_back();
 				self.contents = String::from(chars.as_str());
 				Some(ch)
 			}
