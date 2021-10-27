@@ -22,12 +22,19 @@ impl Scanner {
             ending_char: vec!['(', ')', '{', '}', ' ', '\n', ';', '\t'],
             operator_char: vec!['=', '+', '-', '*', '/', '<', '>'],
             id_map: HashMap::from([
-                (String::from("float"), TokenType::KEYWORD),
+                (String::from("unsigned"), TokenType::KEYWORD),
+                (String::from("char"), TokenType::KEYWORD),
+                (String::from("short"), TokenType::KEYWORD),
                 (String::from("int"), TokenType::KEYWORD),
+                (String::from("long"), TokenType::KEYWORD),
+                (String::from("float"), TokenType::KEYWORD),
+                (String::from("double"), TokenType::KEYWORD),
                 (String::from("void"), TokenType::KEYWORD),
+                (String::from("main"), TokenType::KEYWORD),
                 (String::from("while"), TokenType::KEYWORD),
                 (String::from("for"), TokenType::KEYWORD),
                 (String::from("if"), TokenType::KEYWORD),
+                (String::from("return"), TokenType::KEYWORD),
             ]),
         }
     }
