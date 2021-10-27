@@ -6,10 +6,13 @@ use character_stream::*;
 mod token;
 use token::*;
 
+use std::collections::HashMap;
+
 pub struct Scanner {
     text: CharStream,
     ending_char: Vec<char>,
     operator_char: Vec<char>,
+    id_map: HashMap<String, TokenType>,
 }
 
 impl Scanner {
@@ -18,6 +21,14 @@ impl Scanner {
             text: CharStream::new(f),
             ending_char: vec!['(', ')', '{', '}', ' ', '\n', ';', '\t'],
             operator_char: vec!['=', '+', '-', '*', '/', '<', '>'],
+            id_map: HashMap::from([
+                (String::from("float"), TokenType::KEYWORD),
+                (String::from("int"), TokenType::KEYWORD),
+                (String::from("void"), TokenType::KEYWORD),
+                (String::from("while"), TokenType::KEYWORD),
+                (String::from("for"), TokenType::KEYWORD),
+                (String::from("if"), TokenType::KEYWORD),
+            ]),
         }
     }
 
@@ -37,8 +48,11 @@ impl Scanner {
         }
     }
 
-    fn lookup(&self, word: &String) -> TokenType {
-        TokenType::KEYWORD
+    fn lookup(&self, word: String) -> TokenType {
+        match self.id_map.get(&word) {
+            None => TokenType::VARIABLE,
+            Some(&t) => t,
+        }
     }
 
     // check is the following operator is an operator
@@ -46,6 +60,14 @@ impl Scanner {
         match self.text.peek_next_char() {
             None => false,
             Some(ch) => self.operator_char.contains(&ch),
+        }
+    }
+
+    // check is the following operator is an open parenthesis
+    fn is_next_parenthesis(&self) -> bool {
+        match self.text.peek_next_char() {
+            Some('(') => true,
+            _ => false,
         }
     }
 
@@ -63,7 +85,20 @@ impl Scanner {
             match self.text.get_next_char() {
                 None => break,
                 Some(ch) => match self.ending_char.contains(&ch) {
-                    true => break,
+                    true => match curr_type {
+                        TokenType::VARIABLE => {
+                            if ch == '(' {
+                                match self.id_map.get(&curr_word) {
+                                    None => {
+                                        self.id_map.insert(curr_word.clone(), TokenType::FUNCTION);
+                                    },
+                                    _ => {}
+                                }
+                            }
+                            break;
+                        }
+                        _ => break,
+                    },
                     false => {
                         match curr_type {
                             TokenType::INVALID => break,
@@ -124,7 +159,7 @@ impl Scanner {
             false => None,
             true => {
                 match curr_type {
-                    TokenType::VARIABLE => curr_type = self.lookup(&curr_word),
+                    TokenType::VARIABLE => curr_type = self.lookup(curr_word.clone()),
                     _ => {}
                 }
                 let res = Token::new(curr_word, curr_type, line_num, char_pos);
