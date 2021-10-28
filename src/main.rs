@@ -1,11 +1,10 @@
 #![cfg_attr(debug_assertions, allow(dead_code, unused_imports))]
 
-mod token;
 mod character_stream;
-mod scanner;
 mod parser;
+mod scanner;
+mod token;
 use parser::*;
-
 
 use std::env;
 
@@ -14,5 +13,5 @@ fn main() {
 	let mut parser = Parser::new(&args[2]);
 
 	parser.parse();
-	println!("{}", parser.get_result());
+	// println!("{}", parser.get_result());
 }
