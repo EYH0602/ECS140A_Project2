@@ -58,5 +58,6 @@ impl Token {
 
     pub fn get_char_pos(&self) -> i32 {
         self.char_position
-    }   
+    }
+
 }
