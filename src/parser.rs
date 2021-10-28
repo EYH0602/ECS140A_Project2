@@ -1,19 +1,17 @@
-#[path = "./token.rs"]
-mod token;
-use token::*;
-
-#[path = "./scanner.rs"]
-mod scanner;
-use scanner::*;
+use crate::scanner::Scanner;
+use crate::token::Token;
+use crate::token::TokenType;
 
 pub struct Parser {
     scanner: Scanner,
+    token: Token,
 }
 
 impl Parser {
     pub fn new(f: &str) -> Parser {
         Parser {
             scanner: Scanner::new(f),
+            token: Token::new(String::from(""), TokenType::NONE, 0, 0),
         }
     }
 
@@ -34,5 +32,14 @@ impl Parser {
 
     pub fn parse(&self) {
         println!("parsing!");
+    }
+
+    fn program(&mut self) {
+        match self.scanner.get_next_token() {
+            None => {}
+            Some(t) => {
+                self.token = t;
+            }
+        }
     }
 }

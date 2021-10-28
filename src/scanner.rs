@@ -1,10 +1,6 @@
-#[path = "./character_stream.rs"]
-mod character_stream;
-use character_stream::*;
-
-#[path = "./token.rs"]
-mod token;
-use token::*;
+use crate::character_stream::CharStream;
+use crate::token::Token;
+use crate::token::TokenType;
 
 use std::collections::HashMap;
 
@@ -98,7 +94,7 @@ impl Scanner {
                                 match self.id_map.get(&curr_word) {
                                     None => {
                                         self.id_map.insert(curr_word.clone(), TokenType::FUNCTION);
-                                    },
+                                    }
                                     _ => {}
                                 }
                             }
