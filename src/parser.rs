@@ -43,10 +43,13 @@ impl Parser {
     fn update_token(&mut self) -> bool {
         match self.scanner.get_next_token() {
             None => return false,
-            Some(t) => {
-                self.token = t;
-                true
-            }
+            Some(t) => match t.get_type() {
+                TokenType::INVALID => panic!("Invalid Token: TokenType::INVALID"),
+                _ => {
+                    self.token = t;
+                    true
+                }
+            },
         }
     }
 
