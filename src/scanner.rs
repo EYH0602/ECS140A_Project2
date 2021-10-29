@@ -124,6 +124,9 @@ impl Scanner {
                                     break;
                                 }
                             }
+                            TokenType::VARIABLE => {
+                                curr_word.push(ch);
+                            }
                             _ => {
                                 has_found = true;
                                 curr_word.push(ch);

@@ -58,14 +58,17 @@ impl Parser {
             return;
         }
 
+        // {Declaration}
         loop {
-            let flag1 = self.declaration();
-            println!("{}", self.result);
-            let flag2 = flag1 && self.update_token();
-            if !flag2 {
+            if !self.declaration() {
                 break;
             }
+            println!("{}", self.result);
+            println!("======================");
         }
+
+        self.main_declaration();
+        println!("{}", self.result);
     }
 
     fn declaration(&mut self) -> bool {
@@ -79,10 +82,136 @@ impl Parser {
         }
     }
 
+    fn main_declaration(&mut self) -> bool {
+        let mut text = self.token.get_text();
+        if &*text != "void" {
+            panic!("Invalid Main Declaration type (void)");
+        }
+        if !self.update_token() {
+            return false;
+        }
+        text = self.token.get_text();
+        if &*text != "main" {
+            panic!("Invalid Main Declaration (main)");
+        }
+        self.result.push_str("\nvoid main()");
+        self.block()
+    }
+
+    fn block(&mut self) -> bool {
+        self.result.push_str(" {\n");
+        // {Declaration}
+        if !self.update_token() {
+            return false;
+        }
+        while self.declaration() {}
+        // {Statement}
+        while self.statement() {}
+
+        self.result.push_str("}\n");
+        true
+    }
+
+    fn statement(&mut self) -> bool {
+        match self.token.get_type() {
+            TokenType::VARIABLE => return self.assignment(),
+            TokenType::KEYWORD => match self.token.get_text() {
+                "while" => return self.while_loop(),
+                "if" => return self.if_statement(),
+                "return" => return self.return_statement(),
+                _ => return false,
+            },
+            _ => {}
+        }
+        false
+    }
+
+    fn assignment(&mut self) -> bool {
+        self.identifier();
+        self.result.push_str(" = ");
+        if !self.update_token() {
+            return false;
+        }
+        if &*self.token.get_text() != "=" {
+            panic!("invalid assignment");
+        }
+        if !self.update_token() {
+            return false;
+        }
+        println!(
+            "!!! {} {}",
+            self.token.get_text(),
+            self.token.get_type().as_str()
+        );
+        loop {
+            match self.token.get_type() {
+                TokenType::VARIABLE => {
+                    self.identifier();
+                    self.result.push_str(" = ");
+                    if !self.update_token() {
+                        return false;
+                    }
+                }
+                _ => break,
+            }
+        }
+        self.expression()
+    }
+
+    fn expression(&mut self) -> bool {
+        self.simple_expression()
+    }
+
+    fn simple_expression(&mut self) -> bool {
+        self.term()
+    }
+
+    fn term(&mut self) -> bool {
+        self.factor()
+    }
+
+    fn factor(&mut self) -> bool {
+        match self.token.get_type() {
+            TokenType::INTCONSTANT => self.constant(),
+            TokenType::FLOATCONSTANT => self.constant(),
+            TokenType::FUNCTION => {
+                println!("--- {}", self.token.get_text());
+                self.identifier();
+                self.result.push('(');
+                if !self.update_token() {
+                    return false;
+                }
+                let mut res = self.expression();
+                while res {
+                    self.result.push_str(", ");
+                    if !self.update_token() {
+                        return false;
+                    }
+                    res = res && self.expression();
+                }
+                self.result.push(')');
+                return res;
+            }
+            _ => false,
+        }
+    }
+
+    fn while_loop(&mut self) -> bool {
+        false
+    }
+    fn if_statement(&mut self) -> bool {
+        false
+    }
+    fn return_statement(&mut self) -> bool {
+        false
+    }
+
     fn function_definition(&mut self) {}
 
     fn declaration_type(&mut self) -> bool {
-        self.data_type();
+        if !self.data_type() {
+            return false;
+        }
         if !self.update_token() {
             return false;
         }
@@ -91,18 +220,26 @@ impl Parser {
     }
 
     fn variable_declaration(&mut self) -> bool {
-        self.result.push_str(" = ");
         if !self.update_token() {
+            self.result.push_str(";\n");
             return false;
         }
+
         let text = self.token.get_text();
-        if &*text != "=" {
-            panic!("invalid variable declaration");
+        if &*text == "=" {
+            self.result.push_str(" = ");
+            if !self.update_token() {
+                return false;
+            }
+            let res = self.constant();
+            if !self.update_token() {
+                return false;
+            }
+            res
+        } else {
+            self.result.push_str(";\n");
+            true
         }
-        if !self.update_token() {
-            return false;
-        }
-        self.constant()
     }
 
     fn function_declaration(&mut self) -> bool {
@@ -111,6 +248,9 @@ impl Parser {
         }
         let res = self.parameter_block();
         self.result.push_str(";\n");
+        if !self.update_token() {
+            return false;
+        }
         res
     }
 
@@ -154,10 +294,11 @@ impl Parser {
         true
     }
 
-    fn data_type(&mut self) {
+    fn data_type(&mut self) -> bool {
         if !self.float_type() && !self.integer_type() {
-            panic!("invalid type");
+            return false;
         }
+        true
     }
 
     fn integer_type(&mut self) -> bool {

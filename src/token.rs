@@ -26,7 +26,7 @@ impl TokenType {
 }
 
 
-
+#[derive(Clone)]
 pub struct Token {
     text: String,
     token_type: TokenType,
