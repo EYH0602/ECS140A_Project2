@@ -75,11 +75,14 @@ impl Parser {
         if !self.declaration_type() {
             return false;
         }
+        let res: bool;
         match self.token.get_type() {
-            TokenType::VARIABLE => return self.variable_declaration(),
-            TokenType::FUNCTION => return self.function_declaration(),
+            TokenType::VARIABLE => res = self.variable_declaration(),
+            TokenType::FUNCTION => res = self.function_declaration(),
             _ => panic!("Invalid declaration"),
         }
+        self.result.push_str(";\n");
+        res
     }
 
     fn main_declaration(&mut self) -> bool {
@@ -221,7 +224,6 @@ impl Parser {
 
     fn variable_declaration(&mut self) -> bool {
         if !self.update_token() {
-            self.result.push_str(";\n");
             return false;
         }
 
@@ -237,7 +239,6 @@ impl Parser {
             }
             res
         } else {
-            self.result.push_str(";\n");
             true
         }
     }
@@ -247,7 +248,6 @@ impl Parser {
             return false;
         }
         let res = self.parameter_block();
-        self.result.push_str(";\n");
         if !self.update_token() {
             return false;
         }
@@ -284,13 +284,11 @@ impl Parser {
 
     fn int_constant(&mut self) -> bool {
         self.result.push_str(self.token.get_text());
-        self.result.push_str(";\n");
         true
     }
 
     fn float_constant(&mut self) -> bool {
         self.result.push_str(self.token.get_text());
-        self.result.push_str(";\n");
         true
     }
 
