@@ -9,6 +9,8 @@ pub struct Scanner {
     ending_char: Vec<char>,
     operator_char: Vec<char>,
     id_map: HashMap<String, TokenType>,
+    line_num: i32,
+    char_pos: i32,
 }
 
 impl Scanner {
@@ -32,6 +34,8 @@ impl Scanner {
                 (String::from("if"), TokenType::KEYWORD),
                 (String::from("return"), TokenType::KEYWORD),
             ]),
+            line_num: 1,
+            char_pos: 1,
         }
     }
 
@@ -42,6 +46,10 @@ impl Scanner {
                 None => break,
                 Some(ch) => {
                     if self.ending_char.contains(&ch) {
+                        if ch == '\n' {
+                            self.line_num += 1;
+                            self.char_pos = 1;
+                        }
                         self.text.get_next_char();
                     } else {
                         break;
@@ -77,32 +85,40 @@ impl Scanner {
     pub fn get_next_token(&mut self) -> Option<Token> {
         let mut curr_word = String::from("");
         let mut curr_type: TokenType = TokenType::NONE;
-        let mut line_num: i32 = 0;
-        let mut char_pos: i32 = 0;
         let mut has_found: bool = false;
 
         self.trim();
+        let cur_char_pos = self.char_pos;
 
         while self.text.more_available() {
-            line_num += 1;
             match self.text.get_next_char() {
                 None => break,
                 Some(ch) => match self.ending_char.contains(&ch) {
-                    true => match curr_type {
-                        TokenType::VARIABLE => {
-                            if ch == '(' {
-                                match self.id_map.get(&curr_word) {
-                                    None => {
-                                        self.id_map.insert(curr_word.clone(), TokenType::FUNCTION);
+                    true => {
+                        self.char_pos += 1;
+                        match curr_type {
+                            TokenType::VARIABLE => {
+                                if ch == '(' {
+                                    match self.id_map.get(&curr_word) {
+                                        None => {
+                                            self.id_map
+                                                .insert(curr_word.clone(), TokenType::FUNCTION);
+                                        }
+                                        _ => {}
                                     }
-                                    _ => {}
+                                } else if ch == '\n' {
+                                    println!("aa");
+                                    self.line_num += 1;
+                                    self.char_pos = 1;
                                 }
+                                break;
                             }
-                            break;
+                            _ => break,
                         }
-                        _ => break,
-                    },
+                    }
                     false => {
+                        self.char_pos += 1;
+                        // println!("ch: {}", ch);
                         match curr_type {
                             TokenType::INVALID => break,
                             TokenType::INTCONSTANT => {
@@ -130,7 +146,6 @@ impl Scanner {
                             _ => {
                                 has_found = true;
                                 curr_word.push(ch);
-                                char_pos += 1;
                                 if self.operator_char.contains(&ch) {
                                     curr_type = TokenType::OPERATOR;
                                     match self.text.peek_next_char() {
@@ -138,6 +153,7 @@ impl Scanner {
                                         Some(ch) => {
                                             if ch == '=' {
                                                 curr_word.push(ch);
+                                                self.char_pos += 1;
                                                 self.text.get_next_char();
                                             }
                                         }
@@ -168,7 +184,7 @@ impl Scanner {
                     TokenType::VARIABLE => curr_type = self.lookup(curr_word.clone()),
                     _ => {}
                 }
-                let res = Token::new(curr_word, curr_type, line_num, char_pos);
+                let res = Token::new(curr_word, curr_type, self.line_num, cur_char_pos);
                 Some(res)
             }
         }
