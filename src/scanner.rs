@@ -107,7 +107,6 @@ impl Scanner {
                                         _ => {}
                                     }
                                 } else if ch == '\n' {
-                                    println!("aa");
                                     self.line_num += 1;
                                     self.char_pos = 1;
                                 }
@@ -118,7 +117,6 @@ impl Scanner {
                     }
                     false => {
                         self.char_pos += 1;
-                        // println!("ch: {}", ch);
                         match curr_type {
                             TokenType::INVALID => break,
                             TokenType::INTCONSTANT => {
