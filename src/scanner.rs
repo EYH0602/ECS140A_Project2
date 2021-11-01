@@ -4,6 +4,7 @@ use crate::token::TokenType;
 
 use std::collections::HashMap;
 
+#[derive(Clone)]
 pub struct Scanner {
     text: CharStream,
     ending_char: Vec<char>,

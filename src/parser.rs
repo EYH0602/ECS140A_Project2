@@ -2,6 +2,7 @@ use crate::scanner::Scanner;
 use crate::token::Token;
 use crate::token::TokenType;
 
+#[derive(Clone)]
 pub struct Parser {
     scanner: Scanner,
     token: Token,
@@ -126,7 +127,7 @@ impl Parser {
             },
             _ => {}
         }
-        false
+        true
     }
 
     fn assignment(&mut self) -> bool {
@@ -187,6 +188,9 @@ impl Parser {
                 let mut res = self.expression();
                 while res {
                     self.result.push_str(", ");
+                    if !res {
+                        break;
+                    }
                     if !self.update_token() {
                         return false;
                     }
@@ -195,7 +199,14 @@ impl Parser {
                 self.result.push(')');
                 return res;
             }
-            _ => false,
+            _ => {
+                println!(
+                    "### {} {}",
+                    self.token.get_text(),
+                    self.token.get_type().as_str()
+                );
+                false
+            }
         }
     }
 

@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::prelude::*;
 
+#[derive(Clone)]
 pub struct CharStream {
 	contents: String,
 }
