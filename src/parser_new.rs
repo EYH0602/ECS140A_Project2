@@ -254,12 +254,10 @@ impl Parser {
         // {Identifier =}
         while self.idx < self.tokens.len()
             && self.tokens[self.idx].get_type() == &TokenType::VARIABLE
+            && self.tokens[self.idx + 1].get_text() == "="
         {
             self.result.push_str(self.tokens[self.idx].get_text());
             self.idx += 1;
-            if self.tokens[self.idx].get_text() != "=" {
-                break;
-            }
             self.result.push_str(" = ");
             self.idx += 1;
         }
@@ -273,28 +271,77 @@ impl Parser {
 
     fn expression(&mut self) {
         self.simple_expression();
+        // [ RelationalOperator SimpleExpression]
+        if self.idx + 1 < self.tokens.len() && self.tokens[self.idx + 1].is_relational_op() {
+            self.idx += 1;
+            self.relational_operator();
+            self.idx += 1;
+            self.simple_expression();
+        }
     }
 
     fn simple_expression(&mut self) {
         self.term();
+
+        // { AddOperator Term }
+        while self.idx + 1 < self.tokens.len() && self.tokens[self.idx + 1].is_add_op() {
+            self.idx += 1;
+            self.add_operator();
+            self.idx += 1;
+            self.term();
+        }
     }
 
     fn term(&mut self) {
         self.factor();
+        // { MultOperator Factor }
+        while self.idx + 1 < self.tokens.len() && self.tokens[self.idx + 1].is_mult_op() {
+            self.idx += 1;
+            self.mult_operator();
+            self.idx += 1;
+            self.factor();
+        }
     }
 
     fn factor(&mut self) {
         let token: Token = self.tokens[self.idx].clone();
-        if token.get_type() == &TokenType::INTCONSTANT
-            || token.get_type() == &TokenType::FLOATCONSTANT
-        {
-            self.constant();
+        match token.get_type() {
+            TokenType::INTCONSTANT => self.constant(),
+            TokenType::FLOATCONSTANT => self.constant(),
+            TokenType::VARIABLE => {
+                // Todo: (Identifier [ ( [Expression {, Expression}])])
+                self.result.push_str(token.get_text());
+            }
+            _ => {
+                // Todo: ( ( Expression ) )
+            }
         }
-        // self.show();
     }
 
-    fn relational_operator(&mut self) {}
-    fn add_operator(&mut self) {}
-    fn mult_operator(&mut self) {}
-    fn identifier(&mut self) {}
+    fn relational_operator(&mut self) {
+        if !self.tokens[self.idx].is_relational_op() {
+            self.panic_with_error("Invalid relational operator");
+        }
+        self.result.push(' ');
+        self.result.push_str(self.tokens[self.idx].get_text());
+        self.result.push(' ');
+    }
+
+    fn add_operator(&mut self) {
+        if !self.tokens[self.idx].is_add_op() {
+            self.panic_with_error("invalid add operator");
+        }
+        self.result.push(' ');
+        self.result.push_str(self.tokens[self.idx].get_text());
+        self.result.push(' ');
+    }
+
+    fn mult_operator(&mut self) {
+        if !self.tokens[self.idx].is_mult_op() {
+            self.panic_with_error("invalid add operator");
+        }
+        self.result.push(' ');
+        self.result.push_str(self.tokens[self.idx].get_text());
+        self.result.push(' ');
+    }
 }

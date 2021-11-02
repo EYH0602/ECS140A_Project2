@@ -71,4 +71,19 @@ impl Token {
         ];
         types.contains(&self.get_text())
     }
+
+    pub fn is_relational_op(&self) -> bool {
+        let relational_ops = vec!["==", "<", ">", "<=", ">=", "!="];
+        self.token_type == TokenType::OPERATOR && relational_ops.contains(&self.get_text())
+    }
+
+    pub fn is_add_op(&self) -> bool {
+        let add_ops = vec!["+", "-"];
+        self.token_type == TokenType::OPERATOR && add_ops.contains(&self.get_text())
+    }
+
+    pub fn is_mult_op(&self) -> bool {
+        let mult_ops = vec!["*", "/"];
+        self.token_type == TokenType::OPERATOR && mult_ops.contains(&self.get_text())
+    }
 }
