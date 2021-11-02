@@ -1,13 +1,13 @@
 #[derive(Clone, Copy)]
 pub enum TokenType {
     NONE,
-	INTCONSTANT,
-	FLOATCONSTANT,
+    INTCONSTANT,
+    FLOATCONSTANT,
     OPERATOR,
     KEYWORD,
     VARIABLE,
-	FUNCTION,
-    INVALID
+    FUNCTION,
+    INVALID,
 }
 
 impl TokenType {
@@ -20,18 +20,17 @@ impl TokenType {
             TokenType::KEYWORD => "Keyword",
             TokenType::VARIABLE => "Variable",
             TokenType::FUNCTION => "Function",
-            TokenType::INVALID => "Invalid"
-        }   
-    }   
+            TokenType::INVALID => "Invalid",
+        }
+    }
 }
-
 
 #[derive(Clone)]
 pub struct Token {
     text: String,
     token_type: TokenType,
     line_number: i32,
-    char_position: i32 
+    char_position: i32,
 }
 
 impl Token {
@@ -40,24 +39,30 @@ impl Token {
             text: s,
             token_type: t,
             line_number: linenum,
-            char_position: charpos
-        }   
-    }   
+            char_position: charpos,
+        }
+    }
 
     pub fn get_text(&self) -> &str {
         &self.text
-    }   
+    }
 
     pub fn get_type(&self) -> &TokenType {
         &self.token_type
-    }   
+    }
 
     pub fn get_line_number(&self) -> i32 {
         self.line_number
-    }   
+    }
 
     pub fn get_char_pos(&self) -> i32 {
         self.char_position
     }
 
+    pub fn is_type(&self) -> bool {
+        let types = vec![
+            "unsigned", "char", "short", "int", "long", "float", "double",
+        ];
+        types.contains(&self.get_text())
+    }
 }
