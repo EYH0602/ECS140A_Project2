@@ -62,7 +62,7 @@ impl Parser {
 
     fn show(&self) {
         println!(
-            "!!! {} {} \n {}",
+            "!!! {} {} \n{}",
             self.tokens[self.idx].get_text(),
             self.tokens[self.idx].get_type().as_str(),
             self.result
@@ -71,7 +71,7 @@ impl Parser {
 
     fn program(&mut self) {
         // {Declaration}
-        while self.idx < self.tokens.len() && &*self.tokens[self.idx].get_text() != "void" {
+        while self.idx < self.tokens.len() && self.tokens[self.idx].get_text() != "void" {
             self.declaration();
             self.idx += 1;
         }
@@ -96,7 +96,24 @@ impl Parser {
         self.result.push_str(";\n");
     }
 
-    fn main_declaration(&mut self) {}
+    fn main_declaration(&mut self) {
+        // skip two key words: void main
+        if self.tokens[self.idx].get_text() == "void" {
+            self.result.push_str("void ");
+            self.idx += 1;
+        } else {
+            self.panic_with_error("invalid main declaration: void");
+        }
+        if self.tokens[self.idx].get_text() == "main" {
+            self.result.push_str("main() ");
+            self.idx += 1;
+        } else {
+            self.panic_with_error("invalid main declaration: main");
+        }
+
+        self.block();
+    }
+
     fn function_definition(&mut self) {}
 
     fn declaration_type(&mut self) {
@@ -107,8 +124,9 @@ impl Parser {
     }
 
     fn variable_declaration(&mut self) {
-        if self.tokens[self.idx].get_text() != "=" {
-            self.panic_with_error("invalid variable declaration");
+        if self.idx >= self.tokens.len() || self.tokens[self.idx].get_text() != "=" {
+            self.idx -= 1;
+            return;
         }
         self.result.push_str(" = ");
         self.idx += 1;
@@ -119,7 +137,35 @@ impl Parser {
         self.parameter_block();
     }
 
-    fn block(&mut self) {}
+    fn block(&mut self) {
+        self.result.push_str("{\n");
+
+        // {Declaration}
+        while self.idx < self.tokens.len() && self.tokens[self.idx].is_type() {
+            self.declaration();
+            self.idx += 1;
+        }
+        // if !self.tokens[self.idx].is_type() {
+        //     self.idx -= 1;
+        // }
+
+        // {Statement}
+        let statement_keywords = vec!["while", "if", "return"];
+        while self.idx < self.tokens.len() {
+            let token: Token = self.tokens[self.idx].clone();
+            if token.get_type() != &TokenType::VARIABLE
+                && statement_keywords.contains(&token.get_text())
+            {
+                break;
+            }
+            self.statement();
+            self.idx += 1;
+        }
+
+        // {Function Definition}
+
+        self.result.push_str("\n}\n");
+    }
 
     fn parameter_block(&mut self) {
         self.result.push('(');
@@ -167,7 +213,20 @@ impl Parser {
         self.result.push_str(self.tokens[self.idx].get_text());
     }
 
-    fn statement(&mut self) {}
+    fn statement(&mut self) {
+        let token = self.tokens[self.idx].clone();
+        if token.get_type() == &TokenType::VARIABLE {
+            self.assignment();
+        } else {
+            match token.get_text() {
+                "while" => self.while_loop(),
+                "if" => self.if_statement(),
+                "return" => self.return_statement(),
+                _ => {}
+            }
+        }
+        self.result.push_str(";\n");
+    }
 
     fn parameter(&mut self) {
         self.declaration_type();
@@ -183,14 +242,57 @@ impl Parser {
         self.result.push(' ');
     }
 
-    fn assignment(&mut self) {}
+    fn assignment(&mut self) {
+        self.result.push_str(self.tokens[self.idx].get_text());
+        self.idx += 1;
+        if self.tokens[self.idx].get_text() != "=" {
+            self.panic_with_error("invalid assignment");
+        }
+        self.result.push_str(" = ");
+        self.idx += 1;
+
+        // {Identifier =}
+        while self.idx < self.tokens.len()
+            && self.tokens[self.idx].get_type() == &TokenType::VARIABLE
+        {
+            self.result.push_str(self.tokens[self.idx].get_text());
+            self.idx += 1;
+            if self.tokens[self.idx].get_text() != "=" {
+                break;
+            }
+            self.result.push_str(" = ");
+            self.idx += 1;
+        }
+
+        self.expression();
+    }
+
     fn while_loop(&mut self) {}
     fn if_statement(&mut self) {}
     fn return_statement(&mut self) {}
-    fn expression(&mut self) {}
-    fn simple_expression(&mut self) {}
-    fn term(&mut self) {}
-    fn factor(&mut self) {}
+
+    fn expression(&mut self) {
+        self.simple_expression();
+    }
+
+    fn simple_expression(&mut self) {
+        self.term();
+    }
+
+    fn term(&mut self) {
+        self.factor();
+    }
+
+    fn factor(&mut self) {
+        let token: Token = self.tokens[self.idx].clone();
+        if token.get_type() == &TokenType::INTCONSTANT
+            || token.get_type() == &TokenType::FLOATCONSTANT
+        {
+            self.constant();
+        }
+        // self.show();
+    }
+
     fn relational_operator(&mut self) {}
     fn add_operator(&mut self) {}
     fn mult_operator(&mut self) {}

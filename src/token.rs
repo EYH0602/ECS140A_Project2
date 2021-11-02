@@ -25,6 +25,12 @@ impl TokenType {
     }
 }
 
+impl PartialEq for TokenType {
+    fn eq(&self, other: &Self) -> bool {
+        self.as_str() == other.as_str()
+    }
+}
+
 #[derive(Clone)]
 pub struct Token {
     text: String,
