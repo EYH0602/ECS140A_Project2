@@ -1,10 +1,10 @@
 #![cfg_attr(debug_assertions, allow(dead_code, unused_imports))]
 
 mod character_stream;
-mod parser_new;
+mod parser;
 mod scanner;
 mod token;
-use parser_new::*;
+use parser::*;
 
 use std::env;
 
