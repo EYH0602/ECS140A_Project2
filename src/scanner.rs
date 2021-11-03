@@ -41,7 +41,8 @@ impl Scanner {
     }
 
     // skip any white space or next line
-    fn trim(&mut self) {
+    fn trim(&mut self) -> bool {
+        let mut flag = false;
         while self.text.more_available() {
             match self.text.peek_next_char() {
                 None => break,
@@ -51,6 +52,9 @@ impl Scanner {
                             self.line_num += 1;
                             self.char_pos = 1;
                         }
+                        if ch == '}' {
+                            flag = true;
+                        }
                         self.text.get_next_char();
                     } else {
                         break;
@@ -58,6 +62,7 @@ impl Scanner {
                 }
             }
         }
+        flag
     }
 
     fn lookup(&self, word: String) -> TokenType {
@@ -88,7 +93,11 @@ impl Scanner {
         let mut curr_type: TokenType = TokenType::NONE;
         let mut has_found: bool = false;
 
-        self.trim();
+        // use TokenType::NONE to indicate scope
+        let has_end_of_scope = self.trim();
+        if has_end_of_scope {
+            return Some(Token::new(String::from(""), TokenType::NONE, 0, 0));
+        }
         let cur_char_pos = self.char_pos;
 
         while self.text.more_available() {
@@ -108,7 +117,6 @@ impl Scanner {
                                         _ => {}
                                     }
                                 } else if ch == '\n' {
-                                    println!("aa");
                                     self.line_num += 1;
                                     self.char_pos = 1;
                                 }
@@ -119,7 +127,6 @@ impl Scanner {
                     }
                     false => {
                         self.char_pos += 1;
-                        // println!("ch: {}", ch);
                         match curr_type {
                             TokenType::INVALID => break,
                             TokenType::INTCONSTANT => {

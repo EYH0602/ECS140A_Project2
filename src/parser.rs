@@ -162,7 +162,13 @@ impl Parser {
                 break;
             }
             self.statement();
-            self.idx += 1;
+            if self.tokens[self.idx - 1].get_type() != &TokenType::NONE {
+                self.idx += 1;
+            }
+            if self.tokens[self.idx].get_type() == &TokenType::NONE {
+                self.idx += 1;
+                break;
+            }
         }
 
         // {Function Definition}
@@ -250,10 +256,10 @@ impl Parser {
 
     fn assignment(&mut self) {
         self.result.push_str(self.tokens[self.idx].get_text());
-        self.idx += 1;
-        if self.tokens[self.idx].get_text() != "=" {
+        if self.tokens[self.idx + 1].get_text() != "=" {
             self.panic_with_error("invalid assignment");
         }
+        self.idx += 1;
         self.result.push_str(" = ");
         self.idx += 1;
 
@@ -269,7 +275,6 @@ impl Parser {
         }
 
         self.expression();
-        self.show();
     }
 
     fn while_loop(&mut self) {
