@@ -12,10 +12,9 @@ fn main() {
 	let args: Vec<String> = env::args().collect();
 	let mut parser = Parser::new(&args[2]);
 
-	let mut pc = parser.clone();
-	pc.print_lex_results();
+	parser.print_lex_results();
 
 	println!("\n**************************************************\n");
 	parser.parse();
-	// println!("{}", parser.get_result());
+	println!("{}", parser.get_result());
 }
