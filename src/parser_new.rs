@@ -114,7 +114,13 @@ impl Parser {
         self.block();
     }
 
-    fn function_definition(&mut self) {}
+    fn function_definition(&mut self) {
+        self.declaration_type();
+        self.idx += 1;
+        self.parameter_block();
+        self.idx += 1;
+        self.block();
+    }
 
     fn declaration_type(&mut self) {
         self.data_type();
@@ -145,16 +151,13 @@ impl Parser {
             self.declaration();
             self.idx += 1;
         }
-        // if !self.tokens[self.idx].is_type() {
-        //     self.idx -= 1;
-        // }
 
         // {Statement}
         let statement_keywords = vec!["while", "if", "return"];
         while self.idx < self.tokens.len() {
             let token: Token = self.tokens[self.idx].clone();
             if token.get_type() != &TokenType::VARIABLE
-                && statement_keywords.contains(&token.get_text())
+                && !statement_keywords.contains(&token.get_text())
             {
                 break;
             }
@@ -164,7 +167,7 @@ impl Parser {
 
         // {Function Definition}
 
-        self.result.push_str("\n}\n");
+        self.result.push_str("}\n");
     }
 
     fn parameter_block(&mut self) {
@@ -217,15 +220,18 @@ impl Parser {
         let token = self.tokens[self.idx].clone();
         if token.get_type() == &TokenType::VARIABLE {
             self.assignment();
+            self.result.push_str(";\n");
         } else {
             match token.get_text() {
                 "while" => self.while_loop(),
                 "if" => self.if_statement(),
-                "return" => self.return_statement(),
+                "return" => {
+                    self.return_statement();
+                    self.result.push_str(";\n");
+                },
                 _ => {}
             }
         }
-        self.result.push_str(";\n");
     }
 
     fn parameter(&mut self) {
@@ -265,9 +271,35 @@ impl Parser {
         self.expression();
     }
 
-    fn while_loop(&mut self) {}
-    fn if_statement(&mut self) {}
-    fn return_statement(&mut self) {}
+    fn while_loop(&mut self) {
+        self.result.push_str("while (");
+        self.idx += 1;
+        self.expression();
+        self.result.push_str(") ");
+        self.idx += 1;
+        if self.idx == self.tokens.len() {
+            self.idx -= 1;
+        }
+        self.block();
+    }
+
+    fn if_statement(&mut self) {
+        self.result.push_str("if (");
+        self.idx += 1;
+        self.expression();
+        self.result.push_str(") ");
+        self.idx += 1;
+        if self.idx == self.tokens.len() {
+            self.idx -= 1;
+        }
+        self.block();
+    }
+
+    fn return_statement(&mut self) {
+        self.result.push_str("return ");
+        self.idx += 1;
+        self.expression();
+    }
 
     fn expression(&mut self) {
         self.simple_expression();
