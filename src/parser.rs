@@ -228,7 +228,7 @@ impl Parser {
                 "return" => {
                     self.return_statement();
                     self.result.push_str(";\n");
-                },
+                }
                 _ => {}
             }
         }
@@ -269,6 +269,7 @@ impl Parser {
         }
 
         self.expression();
+        self.show();
     }
 
     fn while_loop(&mut self) {
@@ -341,8 +342,15 @@ impl Parser {
             TokenType::INTCONSTANT => self.constant(),
             TokenType::FLOATCONSTANT => self.constant(),
             TokenType::VARIABLE => {
+                self.result.push_str(token.get_text());
+            }
+            TokenType::FUNCTION => {
                 // Todo: (Identifier [ ( [Expression {, Expression}])])
                 self.result.push_str(token.get_text());
+                self.idx += 1;
+                self.result.push('(');
+                self.expression();
+                self.result.push(')');
             }
             _ => {
                 // Todo: ( ( Expression ) )
