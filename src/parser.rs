@@ -50,6 +50,24 @@ impl Parser {
         self.program();
     }
 
+    pub fn to_xhtml(&self, f: &str) -> String {
+        let settings = String::from("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
+        let head = format!("<head>\n<title>{}</title>\n</head>", f);
+        let xhtml = format!(
+            "{setting}\n{html_open}\n{head}\n{body_open}\n{font_open}\n{body}\n{font_close}\n{body_close}\n{html_close}",
+            setting = settings,
+            head = head,
+            body_open = self.prettifier.get_body_open(),
+            body_close = self.prettifier.get_body_close(),
+            body = self.result,
+            font_open = self.prettifier.get_font_open(),
+            font_close = self.prettifier.get_font_close(),
+            html_open="<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\">",
+            html_close="</html>"
+        );
+        xhtml
+    }
+
     fn panic_with_error(&self, msg: &str) {
         panic!(
             "{}\n  line number: {}\n  char pos: {}",
@@ -74,7 +92,7 @@ impl Parser {
 
     fn indent(&mut self, len: i32) {
         for _ in 0..len {
-            self.result.push_str("  ");
+            self.result.push_str("&nbsp;&nbsp;");
         }
     }
 
@@ -102,19 +120,29 @@ impl Parser {
             TokenType::FUNCTION => self.function_declaration(),
             _ => self.panic_with_error("Invalid declaration"),
         }
-        self.result.push_str(";\n");
+        self.result
+            .push_str("<font color=\"white\"><b>;</b></font><br />");
+        // self.result.push_str(";\n");
     }
 
     fn main_declaration(&mut self) {
         // skip two key words: void main
         if self.tokens[self.idx].get_text() == "void" {
-            self.result.push_str("void ");
+            // self.result.push_str(self.tokens[self.idx].get_text());
+            self.result
+                .push_str(&self.prettifier.prettify(self.tokens[self.idx].clone()));
+            self.result.push(' ');
             self.idx += 1;
         } else {
             self.panic_with_error("invalid main declaration: void");
         }
         if self.tokens[self.idx].get_text() == "main" {
-            self.result.push_str("main() ");
+            // self.result.push_str("main() ");
+            self.result
+                .push_str(&self.prettifier.prettify(self.tokens[self.idx].clone()));
+            self.result.push_str(
+                "<font color=\"white\"><b>(</b></font><font color=\"white\"><b>)</b></font> ",
+            );
             self.idx += 1;
         } else {
             self.panic_with_error("invalid main declaration: main");
@@ -136,7 +164,9 @@ impl Parser {
         self.idx += 1;
         // Identifier
         self.indent(0);
-        self.result.push_str(self.tokens[self.idx].get_text());
+        // self.result.push_str(self.tokens[self.idx].get_text());
+        self.result
+            .push_str(&self.prettifier.prettify(self.tokens[self.idx].clone()));
     }
 
     fn variable_declaration(&mut self) {
@@ -144,7 +174,10 @@ impl Parser {
             self.idx -= 1;
             return;
         }
-        self.result.push_str(" = ");
+        self.result.push_str(" ");
+        self.result
+            .push_str(&self.prettifier.prettify(self.tokens[self.idx].clone()));
+        self.result.push_str(" ");
         self.idx += 1;
         self.constant();
     }
@@ -155,7 +188,9 @@ impl Parser {
 
     fn block(&mut self, indent_len: i32) {
         // self.indent(indent_len);
-        self.result.push_str("{\n");
+        // self.result.push_str("{\n");
+        self.result
+            .push_str("<font color=\"white\"><b>{</b></font><br />");
 
         // {Declaration}
         while self.idx < self.tokens.len() && self.tokens[self.idx].is_type() {
@@ -185,11 +220,15 @@ impl Parser {
         // {Function Definition}
 
         self.indent(indent_len);
-        self.result.push_str("}\n");
+        // self.result.push_str("}\n");
+        self.result
+            .push_str("<font color=\"white\"><b>}</b></font><br />");
     }
 
     fn parameter_block(&mut self) {
-        self.result.push('(');
+        // self.result.push('(');
+        self.result
+            .push_str("<font color=\"white\"><b>(</b></font>");
 
         // [Parameter {, Parameter}]
         if self.tokens[self.idx].is_type() {
@@ -201,7 +240,10 @@ impl Parser {
             && self.tokens[self.idx].is_type()
             && !self.is_line_changed()
         {
-            self.result.push_str(", ");
+            // self.result.push_str(", ");
+            self.result
+                .push_str("<font color=\"white\"><b>,</b></font>");
+            self.result.push(' ');
             self.parameter();
             self.idx += 1;
         }
@@ -210,7 +252,9 @@ impl Parser {
             self.idx -= 1;
         }
 
-        self.result.push(')');
+        // self.result.push(')');
+        self.result
+            .push_str("<font color=\"white\"><b>)</b></font>");
     }
 
     fn data_type(&mut self, indent_len: i32) {
@@ -219,7 +263,10 @@ impl Parser {
         let float_types = vec!["float", "double"];
         if &*token.get_text() == "unsigned" {
             self.indent(indent_len);
-            self.result.push_str("unsigned ");
+            // self.result.push_str("unsigned ");
+            self.result
+                .push_str(&self.prettifier.prettify(self.tokens[self.idx].clone()));
+            self.result.push(' ');
             self.idx += 1;
             self.data_type(indent_len);
         } else if int_types.contains(&token.get_text()) {
@@ -232,21 +279,27 @@ impl Parser {
     }
 
     fn constant(&mut self) {
-        self.result.push_str(self.tokens[self.idx].get_text());
+        // self.result.push_str(self.tokens[self.idx].get_text());
+        self.result
+            .push_str(&self.prettifier.prettify(self.tokens[self.idx].clone()));
     }
 
     fn statement(&mut self, indent_len: i32) {
         let token = self.tokens[self.idx].clone();
         if token.get_type() == &TokenType::VARIABLE {
             self.assignment(indent_len);
-            self.result.push_str(";\n");
+            // self.result.push_str(";\n");
+            self.result
+                .push_str("<font color=\"white\"><b>;</b></font><br />");
         } else {
             match token.get_text() {
                 "while" => self.while_loop(indent_len),
                 "if" => self.if_statement(indent_len),
                 "return" => {
                     self.return_statement(indent_len);
-                    self.result.push_str(";\n");
+                    // self.result.push_str(";\n");
+                    self.result
+                        .push_str("<font color=\"white\"><b>;</b></font><br />");
                 }
                 _ => {}
             }
@@ -259,24 +312,34 @@ impl Parser {
 
     fn integer_type(&mut self, indent_len: i32) {
         self.indent(indent_len);
-        self.result.push_str(self.tokens[self.idx].get_text());
+        // self.result.push_str(self.tokens[self.idx].get_text());
+        self.result
+            .push_str(&self.prettifier.prettify(self.tokens[self.idx].clone()));
         self.result.push(' ');
     }
 
     fn float_type(&mut self, indent_len: i32) {
         self.indent(indent_len);
-        self.result.push_str(self.tokens[self.idx].get_text());
+        // self.result.push_str(self.tokens[self.idx].get_text());
+        self.result
+            .push_str(&self.prettifier.prettify(self.tokens[self.idx].clone()));
         self.result.push(' ');
     }
 
     fn assignment(&mut self, indent_len: i32) {
         self.indent(indent_len);
-        self.result.push_str(self.tokens[self.idx].get_text());
+        // self.result.push_str(self.tokens[self.idx].get_text());
+        self.result
+            .push_str(&self.prettifier.prettify(self.tokens[self.idx].clone()));
         if self.tokens[self.idx + 1].get_text() != "=" {
             self.panic_with_error("invalid assignment");
         }
         self.idx += 1;
-        self.result.push_str(" = ");
+        // self.result.push_str(" = ");
+        self.result.push(' ');
+        self.result
+            .push_str(&self.prettifier.prettify(self.tokens[self.idx].clone()));
+        self.result.push(' ');
         self.idx += 1;
 
         // {Identifier =}
@@ -286,7 +349,11 @@ impl Parser {
         {
             self.result.push_str(self.tokens[self.idx].get_text());
             self.idx += 1;
-            self.result.push_str(" = ");
+            // self.result.push_str(" = ");
+            self.result.push(' ');
+            self.result
+                .push_str(&self.prettifier.prettify(self.tokens[self.idx].clone()));
+            self.result.push(' ');
             self.idx += 1;
         }
 
@@ -295,10 +362,17 @@ impl Parser {
 
     fn while_loop(&mut self, indent_len: i32) {
         self.indent(indent_len);
-        self.result.push_str("while (");
+        // self.result.push_str("while (");
+        self.result
+            .push_str(&self.prettifier.prettify(self.tokens[self.idx].clone()));
+        self.result.push(' ');
+        self.result
+            .push_str("<font color=\"white\"><b>(</b></font>");
         self.idx += 1;
         self.expression();
-        self.result.push_str(") ");
+        // self.result.push_str(") ");
+        self.result
+            .push_str("<font color=\"white\"><b>)</b></font>");
         self.idx += 1;
         if self.idx == self.tokens.len() {
             self.idx -= 1;
@@ -308,10 +382,17 @@ impl Parser {
 
     fn if_statement(&mut self, indent_len: i32) {
         self.indent(indent_len);
-        self.result.push_str("if (");
+        // self.result.push_str("if (");
+        self.result
+            .push_str(&self.prettifier.prettify(self.tokens[self.idx].clone()));
+        self.result.push(' ');
+        self.result
+            .push_str("<font color=\"white\"><b>(</b></font>");
         self.idx += 1;
         self.expression();
-        self.result.push_str(") ");
+        // self.result.push_str(") ");
+        self.result
+            .push_str("<font color=\"white\"><b>)</b></font>");
         self.idx += 1;
         if self.idx == self.tokens.len() {
             self.idx -= 1;
@@ -321,7 +402,10 @@ impl Parser {
 
     fn return_statement(&mut self, indent_len: i32) {
         self.indent(indent_len);
-        self.result.push_str("return ");
+        // self.result.push_str(self.tokens[self.idx].get_text());
+        self.result
+            .push_str(&self.prettifier.prettify(self.tokens[self.idx].clone()));
+        self.result.push(' ');
         self.idx += 1;
         self.expression();
     }
@@ -366,12 +450,18 @@ impl Parser {
             TokenType::INTCONSTANT => self.constant(),
             TokenType::FLOATCONSTANT => self.constant(),
             TokenType::VARIABLE => {
-                self.result.push_str(token.get_text());
+                // self.result.push_str(token.get_text());
+                self.result
+                    .push_str(&self.prettifier.prettify(self.tokens[self.idx].clone()));
             }
             TokenType::FUNCTION => {
-                self.result.push_str(token.get_text());
+                // self.result.push_str(token.get_text());
+                self.result
+                    .push_str(&self.prettifier.prettify(self.tokens[self.idx].clone()));
                 self.idx += 1;
-                self.result.push('(');
+                // self.result.push('(');
+                self.result
+                    .push_str("<font color=\"white\"><b>(</b></font>");
                 self.expression();
 
                 // {, Expression}
@@ -385,7 +475,10 @@ impl Parser {
                     && self.tokens[self.idx].get_line_number() == token.get_line_number()
                 {
                     self.idx += 1;
-                    self.result.push_str(", ");
+                    // self.result.push_str(", "); // !
+                    self.result
+                        .push_str("<font color=\"white\"><b>,</b></font>");
+                    self.result.push(' ');
                     self.expression();
                 }
                 self.result.push(')');
@@ -401,7 +494,9 @@ impl Parser {
             self.panic_with_error("Invalid relational operator");
         }
         self.result.push(' ');
-        self.result.push_str(self.tokens[self.idx].get_text());
+        // self.result.push_str(self.tokens[self.idx].get_text());
+        self.result
+            .push_str(&self.prettifier.prettify(self.tokens[self.idx].clone()));
         self.result.push(' ');
     }
 
@@ -410,7 +505,9 @@ impl Parser {
             self.panic_with_error("invalid add operator");
         }
         self.result.push(' ');
-        self.result.push_str(self.tokens[self.idx].get_text());
+        // self.result.push_str(self.tokens[self.idx].get_text());
+        self.result
+            .push_str(&self.prettifier.prettify(self.tokens[self.idx].clone()));
         self.result.push(' ');
     }
 
@@ -419,7 +516,9 @@ impl Parser {
             self.panic_with_error("invalid add operator");
         }
         self.result.push(' ');
-        self.result.push_str(self.tokens[self.idx].get_text());
+        // self.result.push_str(self.tokens[self.idx].get_text());
+        self.result
+            .push_str(&self.prettifier.prettify(self.tokens[self.idx].clone()));
         self.result.push(' ');
     }
 }

@@ -33,8 +33,27 @@ impl Prettifier {
         }
     }
 
-    pub fn get_header(&self) -> String {
-        String::from("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\">\n<head>\n<title>X Formatted file</title>\n</head>")
+    pub fn get_body_open(&self) -> String {
+        let body_open = String::from(format!(
+            "<body bgcolor=\"{}\" text=\"{}\" link=\"{}\" vlink=\"{}\">",
+            self.background, self.foreground, self.foreground, self.foreground
+        ));
+        body_open
+    }
+
+    pub fn get_body_close(&self) -> String {
+        let body_close = String::from("</body>");
+        body_close
+    }
+
+    pub fn get_font_open(&self) -> String {
+        let font_open = String::from(format!("<font face=\"{}\">", self.font));
+        font_open
+    }
+
+    pub fn get_font_close(&self) -> String {
+        let font_close = String::from("</font>");
+        font_close
     }
 
     pub fn prettify(&self, token: Token) -> String {
@@ -52,7 +71,7 @@ impl Prettifier {
     fn format(&self, color: &str, style_open: &str, text: &str, style_close: &str) -> String {
         let mut res = String::from("<font color=\"");
         res.push_str(color);
-        res.push('\"');
+        res.push_str("\">");
         res.push_str(style_open);
         res.push_str(text);
         res.push_str(style_close);

@@ -2,9 +2,9 @@
 
 mod character_stream;
 mod parser;
+mod prettifier;
 mod scanner;
 mod token;
-mod prettifier;
 use parser::*;
 
 use std::env;
@@ -13,9 +13,6 @@ fn main() {
 	let args: Vec<String> = env::args().collect();
 	let mut parser = Parser::new(&args[2]);
 
-	parser.print_lex_results();
-
-	println!("\n**************************************************\n");
 	parser.parse();
-	println!("{}", parser.get_result());
+	println!("{}", parser.to_xhtml("X Formatted file"));
 }
