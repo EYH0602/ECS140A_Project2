@@ -1,3 +1,4 @@
+use crate::prettifier::Prettifier;
 use crate::scanner::Scanner;
 use crate::token::Token;
 use crate::token::TokenType;

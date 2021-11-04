@@ -4,6 +4,7 @@ mod character_stream;
 mod parser;
 mod scanner;
 mod token;
+mod prettifier;
 use parser::*;
 
 use std::env;
