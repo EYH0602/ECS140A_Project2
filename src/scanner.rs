@@ -18,7 +18,7 @@ impl Scanner {
     pub fn new(f: &str) -> Scanner {
         Scanner {
             text: CharStream::new(f),
-            ending_char: vec!['(', ')', '{', '}', ' ', '\n', ';', '\t'],
+            ending_char: vec!['(', ')', '{', '}', ' ', '\n', ';', '\t', ','],
             operator_char: vec!['=', '+', '-', '*', '/', '<', '>', '!'],
             id_map: HashMap::from([
                 (String::from("unsigned"), TokenType::KEYWORD),
