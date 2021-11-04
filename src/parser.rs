@@ -350,11 +350,25 @@ impl Parser {
                 self.result.push_str(token.get_text());
             }
             TokenType::FUNCTION => {
-                // Todo: (Identifier [ ( [Expression {, Expression}])])
                 self.result.push_str(token.get_text());
                 self.idx += 1;
                 self.result.push('(');
                 self.expression();
+
+                // {, Expression}
+                let token: Token = self.tokens[self.idx + 1].clone();
+                let parameter_types = vec![
+                    TokenType::FLOATCONSTANT,
+                    TokenType::INTCONSTANT,
+                    TokenType::VARIABLE,
+                ];
+                if parameter_types.contains(token.get_type())
+                    && self.tokens[self.idx].get_line_number() == token.get_line_number()
+                {
+                    self.idx += 1;
+                    self.result.push_str(", ");
+                    self.expression();
+                }
                 self.result.push(')');
             }
             _ => {
