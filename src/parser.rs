@@ -69,10 +69,16 @@ impl Parser {
         );
     }
 
+    fn indent(&mut self, len: i32) {
+        for _ in 0..len {
+            self.result.push_str("  ");
+        }
+    }
+
     fn program(&mut self) {
         // {Declaration}
         while self.idx < self.tokens.len() && self.tokens[self.idx].get_text() != "void" {
-            self.declaration();
+            self.declaration(0);
             self.idx += 1;
         }
 
@@ -85,8 +91,8 @@ impl Parser {
         }
     }
 
-    fn declaration(&mut self) {
-        self.declaration_type();
+    fn declaration(&mut self, indent_len: i32) {
+        self.declaration_type(indent_len);
         self.idx += 1;
         match self.tokens[self.idx - 1].get_type() {
             TokenType::VARIABLE => self.variable_declaration(),
@@ -111,21 +117,22 @@ impl Parser {
             self.panic_with_error("invalid main declaration: main");
         }
 
-        self.block();
+        self.block(0);
     }
 
     fn function_definition(&mut self) {
-        self.declaration_type();
+        self.declaration_type(0);
         self.idx += 1;
         self.parameter_block();
         self.idx += 1;
-        self.block();
+        self.block(0);
     }
 
-    fn declaration_type(&mut self) {
-        self.data_type();
+    fn declaration_type(&mut self, indent_len: i32) {
+        self.data_type(indent_len);
         self.idx += 1;
         // Identifier
+        self.indent(0);
         self.result.push_str(self.tokens[self.idx].get_text());
     }
 
@@ -143,12 +150,13 @@ impl Parser {
         self.parameter_block();
     }
 
-    fn block(&mut self) {
+    fn block(&mut self, indent_len: i32) {
+        // self.indent(indent_len);
         self.result.push_str("{\n");
 
         // {Declaration}
         while self.idx < self.tokens.len() && self.tokens[self.idx].is_type() {
-            self.declaration();
+            self.declaration(indent_len + 1);
             self.idx += 1;
         }
 
@@ -161,7 +169,7 @@ impl Parser {
             {
                 break;
             }
-            self.statement();
+            self.statement(indent_len + 1);
             if self.tokens[self.idx - 1].get_type() != &TokenType::NONE {
                 self.idx += 1;
             }
@@ -173,6 +181,7 @@ impl Parser {
 
         // {Function Definition}
 
+        self.indent(indent_len);
         self.result.push_str("}\n");
     }
 
@@ -201,18 +210,19 @@ impl Parser {
         self.result.push(')');
     }
 
-    fn data_type(&mut self) {
+    fn data_type(&mut self, indent_len: i32) {
         let token: Token = self.tokens[self.idx].clone();
         let int_types = vec!["char", "short", "int", "long"];
         let float_types = vec!["float", "double"];
         if &*token.get_text() == "unsigned" {
+            self.indent(indent_len);
             self.result.push_str("unsigned ");
             self.idx += 1;
-            self.data_type();
+            self.data_type(indent_len);
         } else if int_types.contains(&token.get_text()) {
-            self.integer_type();
+            self.integer_type(indent_len);
         } else if float_types.contains(&token.get_text()) {
-            self.float_type();
+            self.float_type(indent_len);
         } else {
             self.panic_with_error("invalid data type");
         }
@@ -222,17 +232,17 @@ impl Parser {
         self.result.push_str(self.tokens[self.idx].get_text());
     }
 
-    fn statement(&mut self) {
+    fn statement(&mut self, indent_len: i32) {
         let token = self.tokens[self.idx].clone();
         if token.get_type() == &TokenType::VARIABLE {
-            self.assignment();
+            self.assignment(indent_len);
             self.result.push_str(";\n");
         } else {
             match token.get_text() {
-                "while" => self.while_loop(),
-                "if" => self.if_statement(),
+                "while" => self.while_loop(indent_len),
+                "if" => self.if_statement(indent_len),
                 "return" => {
-                    self.return_statement();
+                    self.return_statement(indent_len);
                     self.result.push_str(";\n");
                 }
                 _ => {}
@@ -241,20 +251,23 @@ impl Parser {
     }
 
     fn parameter(&mut self) {
-        self.declaration_type();
+        self.declaration_type(0);
     }
 
-    fn integer_type(&mut self) {
+    fn integer_type(&mut self, indent_len: i32) {
+        self.indent(indent_len);
         self.result.push_str(self.tokens[self.idx].get_text());
         self.result.push(' ');
     }
 
-    fn float_type(&mut self) {
+    fn float_type(&mut self, indent_len: i32) {
+        self.indent(indent_len);
         self.result.push_str(self.tokens[self.idx].get_text());
         self.result.push(' ');
     }
 
-    fn assignment(&mut self) {
+    fn assignment(&mut self, indent_len: i32) {
+        self.indent(indent_len);
         self.result.push_str(self.tokens[self.idx].get_text());
         if self.tokens[self.idx + 1].get_text() != "=" {
             self.panic_with_error("invalid assignment");
@@ -277,7 +290,8 @@ impl Parser {
         self.expression();
     }
 
-    fn while_loop(&mut self) {
+    fn while_loop(&mut self, indent_len: i32) {
+        self.indent(indent_len);
         self.result.push_str("while (");
         self.idx += 1;
         self.expression();
@@ -286,10 +300,11 @@ impl Parser {
         if self.idx == self.tokens.len() {
             self.idx -= 1;
         }
-        self.block();
+        self.block(indent_len);
     }
 
-    fn if_statement(&mut self) {
+    fn if_statement(&mut self, indent_len: i32) {
+        self.indent(indent_len);
         self.result.push_str("if (");
         self.idx += 1;
         self.expression();
@@ -298,10 +313,11 @@ impl Parser {
         if self.idx == self.tokens.len() {
             self.idx -= 1;
         }
-        self.block();
+        self.block(indent_len);
     }
 
-    fn return_statement(&mut self) {
+    fn return_statement(&mut self, indent_len: i32) {
+        self.indent(indent_len);
         self.result.push_str("return ");
         self.idx += 1;
         self.expression();
@@ -309,7 +325,7 @@ impl Parser {
 
     fn expression(&mut self) {
         self.simple_expression();
-        // [ RelationalOperator SimpleExpression]
+        // [ RelationalOperator SimpleExpression ]
         if self.idx + 1 < self.tokens.len() && self.tokens[self.idx + 1].is_relational_op() {
             self.idx += 1;
             self.relational_operator();
