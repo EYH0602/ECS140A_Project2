@@ -8,6 +8,7 @@ pub struct Parser {
     tokens: Vec<Token>,
     idx: usize,
     result: String,
+    prettifier: Prettifier,
 }
 
 impl Parser {
@@ -27,6 +28,7 @@ impl Parser {
             tokens: token_acc,
             idx: 0,
             result: String::from(""),
+            prettifier: Prettifier::new(),
         }
     }
 
