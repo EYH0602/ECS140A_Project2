@@ -12,7 +12,7 @@ pub struct Parser {
 }
 
 impl Parser {
-    pub fn new(f: &str) -> Parser {
+    pub fn new(f: &str, format_f: &str) -> Parser {
         let mut token_acc = Vec::new();
         let mut scanner = Scanner::new(f);
 
@@ -28,7 +28,7 @@ impl Parser {
             tokens: token_acc,
             idx: 0,
             result: String::from(""),
-            prettifier: Prettifier::new(),
+            prettifier: Prettifier::new(format_f),
         }
     }
 
@@ -50,9 +50,9 @@ impl Parser {
         self.program();
     }
 
-    pub fn to_xhtml(&self, f: &str) -> String {
+    pub fn to_xhtml(&self) -> String {
         let settings = String::from("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
-        let head = format!("<head>\n<title>{}</title>\n</head>", f);
+        let head = format!("<head>\n<title>{}</title>\n</head>", "X Formatted File");
         let xhtml = format!(
             "{setting}\n{html_open}\n{head}\n{body_open}\n{font_open}\n{body}\n{font_close}\n{body_close}\n{html_close}",
             setting = settings,

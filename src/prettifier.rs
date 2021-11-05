@@ -1,11 +1,16 @@
 use crate::token::Token;
 use crate::token::TokenType;
 
+use std::collections::HashMap;
 use std::fmt;
+use std::fs::File;
+use std::io::prelude::*;
+use std::io::BufRead;
+use std::io::BufReader;
+use std::path::Path;
 
 #[derive(Clone)]
 pub struct Prettifier {
-    title: String,
     background: String,
     foreground: String,
     font: String,
@@ -18,18 +23,53 @@ pub struct Prettifier {
 }
 
 impl Prettifier {
-    pub fn new() -> Prettifier {
+    pub fn new(f: &str) -> Prettifier {
+        let mut field_map: HashMap<String, usize> = HashMap::new();
+        let mut val_map: HashMap<String, Vec<String>> = HashMap::new();
+        match File::open(f) {
+            Ok(file) => {
+                let reader = BufReader::new(file);
+                for (file_idx, line) in reader.lines().enumerate() {
+                    let line = line.unwrap();
+                    if file_idx == 0 {
+                        for (i, key) in line.split(',').enumerate() {
+                            field_map.insert(String::from(key), i);
+                        }
+                    } else {
+                        let mut key: &str = "";
+                        for (i, s) in line.split(',').enumerate() {
+                            if i == 0 {
+                                key = s;
+                                val_map.insert(String::from(s), Vec::new());
+                            }
+                            match val_map.get_mut(&String::from(key)) {
+                                Some(vector) => vector.push(String::from(s)),
+                                _ => {}
+                            }
+                        }
+                    }
+                }
+            }
+            Err(_) => {
+                panic!("Error opening file {}", f);
+            }
+        }
+
+        // extract a String value from maps, category indicating row, field indicating column
+        let get_value = |field: &str, category: &str| {
+            val_map.get(category).unwrap()[*field_map.get(field).unwrap()].clone()
+        };
+
         Prettifier {
-            title: String::from("ABC"),
-            background: String::from("navy"),
-            foreground: String::from("yellow"),
-            font: String::from("Courier New"),
-            function: String::from("orange"),
-            variable: String::from("yellow"),
-            float: String::from("aqua"),
-            int: String::from("aqua"),
-            operator: String::from("white"),
-            keyword: String::from("white"),
+            background: get_value("BACKGROUND", "DEFAULT"),
+            foreground: get_value("FOREGROUND", "DEFAULT"),
+            font: get_value("FONT", "DEFAULT"),
+            function: get_value("FOREGROUND", "FUNCTION"),
+            variable: get_value("FOREGROUND", "VARIABLE"),
+            float: get_value("FOREGROUND", "FLOAT_CONSTANT"),
+            int: get_value("FOREGROUND", "INT_CONSTANT"),
+            operator: get_value("FOREGROUND", "OPERATOR"),
+            keyword: get_value("FOREGROUND", "KEYWORD"),
         }
     }
 
@@ -47,7 +87,7 @@ impl Prettifier {
     }
 
     pub fn get_font_open(&self) -> String {
-        let font_open = String::from(format!("<font face=\"{}\">", self.font));
+        let font_open = String::from(format!("<font face={}>", self.font));
         font_open
     }
 

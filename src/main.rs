@@ -7,12 +7,14 @@ mod scanner;
 mod token;
 use parser::*;
 
+use prettifier::*;
+
 use std::env;
 
 fn main() {
 	let args: Vec<String> = env::args().collect();
-	let mut parser = Parser::new(&args[2]);
+	let mut parser = Parser::new(&args[2], "format.csv");
 
 	parser.parse();
-	println!("{}", parser.to_xhtml("X Formatted file"));
+	println!("{}", parser.to_xhtml());
 }
