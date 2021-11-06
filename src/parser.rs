@@ -103,6 +103,9 @@ impl Parser {
             self.idx += 1;
         }
 
+        if self.idx >= self.tokens.len() {
+            panic!("Missing Main Declaration!");
+        }
         self.main_declaration();
 
         // {Function Definition}
@@ -247,6 +250,11 @@ impl Parser {
             self.parameter();
             self.idx += 1;
         }
+
+        if self.idx >= self.tokens.len() {
+            return;
+        }
+
         // if break out of loop by line change, an extra 1 is added
         if self.is_line_changed() {
             self.idx -= 1;
