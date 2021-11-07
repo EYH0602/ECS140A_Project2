@@ -288,8 +288,25 @@ impl Parser {
 
     fn constant(&mut self) {
         // self.result.push_str(self.tokens[self.idx].get_text());
-        self.result
-            .push_str(&self.prettifier.prettify(self.tokens[self.idx].clone()));
+        match self.tokens[self.idx].get_type() {
+            TokenType::OPERATOR => {
+                if self.tokens[self.idx].get_text() == "-" {
+                    self.result
+                        .push_str(&self.prettifier.prettify(self.tokens[self.idx].clone()));
+                    self.idx += 1;
+                    self.constant();
+                } else {
+                    self.panic_with_error("unsupported unary operator");
+                }
+            }
+            TokenType::INTCONSTANT => self
+                .result
+                .push_str(&self.prettifier.prettify(self.tokens[self.idx].clone())),
+            TokenType::FLOATCONSTANT => self
+                .result
+                .push_str(&self.prettifier.prettify(self.tokens[self.idx].clone())),
+            _ => self.panic_with_error("unsupported constant"),
+        }
     }
 
     fn statement(&mut self, indent_len: i32) {
@@ -456,6 +473,7 @@ impl Parser {
         let token: Token = self.tokens[self.idx].clone();
         match token.get_type() {
             TokenType::INTCONSTANT => self.constant(),
+            TokenType::OPERATOR => self.constant(),
             TokenType::FLOATCONSTANT => self.constant(),
             TokenType::VARIABLE => {
                 // self.result.push_str(token.get_text());
