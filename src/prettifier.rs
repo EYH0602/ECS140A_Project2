@@ -9,6 +9,7 @@ use std::io::BufRead;
 use std::io::BufReader;
 use std::path::Path;
 
+/// A prettifier for tokens, telling color/font of foreground and background
 #[derive(Clone)]
 pub struct Prettifier {
     background: String,
@@ -23,6 +24,12 @@ pub struct Prettifier {
 }
 
 impl Prettifier {
+    /// Create a new Prettifier for Tokens
+    /// 
+    /// # Arguments
+    /// 
+    /// * `f` - path to the config csv file, `format.csv` in this project
+    /// 
     pub fn new(f: &str) -> Prettifier {
         let mut field_map: HashMap<String, usize> = HashMap::new();
         let mut val_map: HashMap<String, Vec<String>> = HashMap::new();
@@ -73,6 +80,7 @@ impl Prettifier {
         }
     }
 
+    /// open tag for html body
     pub fn get_body_open(&self) -> String {
         let body_open = String::from(format!(
             "<body bgcolor=\"{}\" text=\"{}\" link=\"{}\" vlink=\"{}\">",
@@ -81,21 +89,25 @@ impl Prettifier {
         body_open
     }
 
+    /// close tag for html body
     pub fn get_body_close(&self) -> String {
         let body_close = String::from("</body>");
         body_close
     }
 
+    /// open tag for html font tag
     pub fn get_font_open(&self) -> String {
         let font_open = String::from(format!("<font face={}>", self.font));
         font_open
     }
 
+    /// close tag for html font tag
     pub fn get_font_close(&self) -> String {
         let font_close = String::from("</font>");
         font_close
     }
 
+    /// get the html format for a token
     pub fn prettify(&self, token: Token) -> String {
         match token.get_type() {
             &TokenType::FUNCTION => self.format(&self.function, "", token.get_text(), ""),

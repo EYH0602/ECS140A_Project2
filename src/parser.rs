@@ -12,6 +12,13 @@ pub struct Parser {
 }
 
 impl Parser {
+    /// Create a new Parser for X-lang
+    /// 
+    /// # Arguments
+    /// 
+    /// * `f` - path to the source file
+    /// * `format_f` - path to the config csv file, `format.csv` in this project
+    /// 
     pub fn new(f: &str, format_f: &str) -> Parser {
         let mut token_acc = Vec::new();
         let mut scanner = Scanner::new(f);
@@ -32,6 +39,7 @@ impl Parser {
         }
     }
 
+    /// print all all the tokens after lexer
     pub fn print_lex_results(&self) {
         for token in &self.tokens {
             println!("text: {}", token.get_text());
@@ -46,6 +54,7 @@ impl Parser {
         &self.result
     }
 
+    /// start the recursive descent parser based on EBNF rules
     pub fn parse(&mut self) {
         self.program();
     }
